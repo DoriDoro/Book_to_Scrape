@@ -1,60 +1,49 @@
 import requests
 import re
+import time
 
 from bs4 import BeautifulSoup as BfS
 
-page = requests.get("http://books.toscrape.com/catalogue/category/books/history_32/index.html")
-soup = BfS(page.content, "html.parser")
+url = "http://books.toscrape.com/catalogue/category/books/history_32/index.html"
+response = requests.get(url)
 
-url_links = soup.find_all("div", class_="image_container")
-for links in url_links:
-    link_list = []
-    link = links.find("a", href=True)
-    link_list.append(link)
-    print(link)
+if response.ok:
+    links = []
+    soup = BfS(response.text, "html.parser")
+    rows = soup.findAll("article")
+    for row in rows:
+        a = row.find("a")
+        link = a["href"]
+        links.append("http://books.toscrape.com/catalogue/" + link)
+    time.sleep(3)
 
+# with open("category.csv", "w") as file: or txt file
+#     for link in links:
+#         file.write(link.replace("../../../", "") + "\n")
 
+with open("category.csv", "r") as file:
+    for row in file:
+        url = row.strip()
+        response = requests.get(url)
+        if response.ok:
+            soup = BfS(response.text, "html.parser")
 
-# title = soup.title.string
-# upc = soup.find("th", text="UPC").find_next_sibling("td").string
-# price_including_tax = soup.find("th", text="Price (incl. tax)").find_next_sibling("td").string
-# price_excluding_tax = soup.find("th", text="Price (excl. tax)").find_next_sibling("td").string
-# available = soup.find("p", class_="instock").text
-# description = soup.find("div", id="product_description").find_next("p").string
-# category = soup.find("a", attrs={"href": re.compile("/category/books/")}).string
-# rating = soup.find("p", class_="star-rating Three")
-# image = soup.find("img")
-# image_url = image["src"]
-
-with open("category.csv", "w") as csv_file:
-    csv_file.write("Product Page URL: \n")
-    csv_file.write(f"{link_list}\n\n")
-
-    # csv_file.write("Universal Product Code: ")
-    # csv_file.write(f"{upc}\n\n")
-    #
-    # csv_file.write("Title: ")
-    # csv_file.write(f"{title}\n\n")
-    #
-    # csv_file.write("Price including tax: ")
-    # csv_file.write(f"{price_including_tax}\n\n")
-    #
-    # csv_file.write("Price excluding tax: ")
-    # csv_file.write(f"{price_excluding_tax}\n\n")
-    #
-    # csv_file.write("Number available: ")
-    # csv_file.write(f"{available}\n\n")
-    #
-    # csv_file.write("Product Description: ")
-    # csv_file.write(f"{description}\n\n")
-    #
-    # csv_file.write("Category: ")
-    # csv_file.write(f"{category}\n\n")
-    #
-    # csv_file.write("Review Rating: ")
-    # csv_file.write(f"{rating}\n\n")
-    #
-    # csv_file.write("Image URL: ")
-    # csv_file.write(f"{image_url}\n\n")
-
-
+            # title
+            title = soup.title.string
+            # universal product code (upc)
+            upc = soup.find("th", text="UPC").find_next_sibling("td").string
+            # price including tax (pit)
+            pit = soup.find("th", text="Price (incl. tax)").find_next_sibling("td").string
+            # price_excluding_tax (pet)
+            pet = soup.find("th", text="Price (excl. tax)").find_next_sibling("td").string
+            # available number
+            available = soup.find("p", class_="instock").text
+            # product description
+            description = soup.find("div", id="product_description").find_next("p").string
+            # category
+            category = soup.find("a", attrs={"href": re.compile("/category/books/")}).string
+            # review rating
+            rating = soup.find("p", class_="star-rating Three")
+            # image
+            image = soup.find("img")
+            image_url = image["src"]
