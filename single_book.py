@@ -16,18 +16,18 @@ pit = soup.find("th", text="Price (incl. tax)").find_next_sibling("td").string
 # price_excluding_tax (pet)
 pet = soup.find("th", text="Price (excl. tax)").find_next_sibling("td").string
 # available number
-available = soup.find("p", class_="instock").text
+available = soup.find("th", text="Availability").find_next_sibling("td").string
 # product description
 description = soup.find("div", id="product_description").find_next("p").string
 # category
 category = soup.find("a", attrs={"href": re.compile("/category/books/")}).string
 # review rating
-rating = soup.find("p", class_="star-rating Three")
+rating = soup.find("th", text="Number of reviews").find_next_sibling("td").string
 # image
 image = soup.find("img")
 image_url = image["src"]
 
-with open("single_book.csv", "w") as csv_file:
+with open("single_book.csv", "w", encoding="utf-8") as csv_file:
     csv_file.write("Product Page URL:\n")
     csv_file.write(url + "\n\n")
 
@@ -44,7 +44,7 @@ with open("single_book.csv", "w") as csv_file:
     csv_file.write(pet + "\n\n")
 
     csv_file.write("Number available:\n")
-    csv_file.write(available + "\n\n")
+    csv_file.write(available.replace("In stock (", "").replace(")", "") + "\n\n")
 
     csv_file.write("Product Description:\n")
     csv_file.write(description + "\n\n")
@@ -53,7 +53,7 @@ with open("single_book.csv", "w") as csv_file:
     csv_file.write(category + "\n\n")
 
     csv_file.write("Review Rating:\n")
-    csv_file.write(str(rating) + "\n\n")
+    csv_file.write(rating + "\n\n")
 
     csv_file.write("Image URL:\n")
     csv_file.write(image_url)

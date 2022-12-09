@@ -2,16 +2,16 @@ import requests
 
 from bs4 import BeautifulSoup as BfS
 
-url = "http://books.toscrape.com/catalogue/category/books/history_32/index.html"
+url = "http://books.toscrape.com/index.html"
 response = requests.get(url)
 
 if response.ok:
     categories = []
     soup = BfS(response.text, "html.parser")
-    rows = soup.findAll("ul", {"class": "nav"})
+    rows = soup.find_all("ul", {"class": "nav"})
     for row in rows:
-        inner_ul = row.findAll("ul")
+        inner_ul = row.find_all("ul")
         for ul in inner_ul:
-            category = ul.findAll("a")
+            category = ul.find_all("a")
             categories.append(category)
     print(categories)
