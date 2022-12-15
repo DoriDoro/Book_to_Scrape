@@ -1,35 +1,43 @@
+import csv
 import requests
 import re
 import time
 
+from urllib.parse import urljoin
 from bs4 import BeautifulSoup as BfS
 
+# the URL to scrape:
 url = "http://books.toscrape.com/catalogue/category/books/history_32/index.html"
 response = requests.get(url)
 
 if response.ok:
     links = []
-    soup = BfS(response.text, "html.parser")
+    soup = BfS(response.content, "html.parser")
+    # find all <articles class="product_pod">:
     rows = soup.find_all("article")
     for row in rows:
         a = row.find("a")
         link = a["href"]
+        # create link of each book:
         links.append("http://books.toscrape.com/catalogue/" + link)
-    time.sleep(3)
+    time.sleep(2)
 
-# with open("category_data.csv", "w", encoding="utf-8") as file:
+# write the row data of the books for one category in csv-file:
+# with open("category_data.csv", "w", newline="", encoding="utf-8") as file:
 #     for link in links:
 #         file.write(link.replace("../../../", "") + "\n")
 
-with open("category_data.csv", "r", encoding="utf-8") as file:
+# read data out of the csv-file:
+with open("category_data.csv", "r", newline="", encoding="utf-8") as file:
     for row in file:
         url = row.strip()
         response = requests.get(url)
         if response.ok:
             soup = BfS(response.text, "html.parser")
 
+            # search for information on website:
             # title
-            title = soup.title.string
+            title = soup.find("li", class_="active").string
             # universal product code (upc)
             upc = soup.find("th", text="UPC").find_next_sibling("td").string
             # price including tax (pit)
@@ -48,34 +56,35 @@ with open("category_data.csv", "r", encoding="utf-8") as file:
             image = soup.find("img")
             image_url = image["src"]
 
-with open("category.csv", "w", encoding="utf-8") as csv_file:
-    csv_file.write("Product Page URL:\n")
-    csv_file.write(url + "\n\n")
+# write information in csv-file:
+with open("category.csv", "w", newline="", encoding="utf-8") as file:
+    writer = csv.writer(file)
+    writer.writerow(["Product Page URL:"])
+    writer.writerow([url])
 
-    csv_file.write("Universal Product Code:\n")
-    csv_file.write(upc + "\n\n")
+    writer.writerow(["Universal Product Code:"])
+    writer.writerow([upc])
 
-    csv_file.write("Title:\n")
-    csv_file.write(title.replace("\n", "") + "\n\n")
+    writer.writerow(["Title:"])
+    writer.writerow([title])
 
-    csv_file.write("Price including tax:\n")
-    csv_file.write(pit + "\n\n")
+    writer.writerow(["Price including tax:"])
+    writer.writerow([pit])
 
-    csv_file.write("Price excluding tax:\n")
-    csv_file.write(pet + "\n\n")
+    writer.writerow(["Price excluding tax:"])
+    writer.writerow([pet])
 
-    csv_file.write("Number available:\n")
-    csv_file.write(available.replace("In stock (", "").replace(")", "") + "\n\n")
+    writer.writerow(["Number available:"])
+    writer.writerow([available.replace("In stock (", "").replace(")", "")])
 
-    csv_file.write("Product Description:\n")
-    csv_file.write(description + "\n\n")
+    writer.writerow(["Product Description:"])
+    writer.writerow([description])
 
-    csv_file.write("Category:\n")
-    csv_file.write(category + "\n\n")
+    writer.writerow(["Category:"])
+    writer.writerow([category])
 
-    csv_file.write("Review Rating:\n")
-    csv_file.write(rating + "\n\n")
+    writer.writerow(["Review Rating:"])
+    writer.writerow([rating])
 
-    csv_file.write("Image URL:\n")
-    csv_file.write(image_url)
-
+    writer.writerow(["Image URL:"])
+    writer.writerow([image_url])

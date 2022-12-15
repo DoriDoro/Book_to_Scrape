@@ -1,14 +1,17 @@
+import csv
 import requests
 import re
 
 from bs4 import BeautifulSoup as BfS
 
+# the URL to scrape:
 url = "http://books.toscrape.com/catalogue/the-murder-that-never-was-forensic-instincts-5_939/index.html"
 page = requests.get(url)
 soup = BfS(page.content, "html.parser")
 
+# search for information on website:
 # title
-title = soup.title.string
+title = soup.find("li", class_="active").string
 # universal product code (upc)
 upc = soup.find("th", text="UPC").find_next_sibling("td").string
 # price including tax (pit)
@@ -27,35 +30,37 @@ rating = soup.find("th", text="Number of reviews").find_next_sibling("td").strin
 image = soup.find("img")
 image_url = image["src"]
 
-with open("single_book.csv", "w", encoding="utf-8") as csv_file:
-    csv_file.write("Product Page URL:\n")
-    csv_file.write(url + "\n\n")
+# write information in csv-file:
+with open("single_book.csv", "w", newline="", encoding="utf-8") as file:
+    writer = csv.writer(file)
+    writer.writerow(["Product Page URL:"])
+    writer.writerow([url])
 
-    csv_file.write("Universal Product Code:\n")
-    csv_file.write(upc + "\n\n")
+    writer.writerow(["Universal Product Code:"])
+    writer.writerow([upc])
 
-    csv_file.write("Title:\n")
-    csv_file.write(title.replace("\n", "") + "\n\n")
+    writer.writerow(["Title:"])
+    writer.writerow([title])
 
-    csv_file.write("Price including tax:\n")
-    csv_file.write(pit + "\n\n")
+    writer.writerow(["Price including tax:"])
+    writer.writerow([pit])
 
-    csv_file.write("Price excluding tax:\n")
-    csv_file.write(pet + "\n\n")
+    writer.writerow(["Price excluding tax:"])
+    writer.writerow([pet])
 
-    csv_file.write("Number available:\n")
-    csv_file.write(available.replace("In stock (", "").replace(")", "") + "\n\n")
+    writer.writerow(["Number available:"])
+    writer.writerow([available.replace("In stock (", "").replace(")", "")])
 
-    csv_file.write("Product Description:\n")
-    csv_file.write(description + "\n\n")
+    writer.writerow(["Product Description:"])
+    writer.writerow([description])
 
-    csv_file.write("Category:\n")
-    csv_file.write(category + "\n\n")
+    writer.writerow(["Category:"])
+    writer.writerow([category])
 
-    csv_file.write("Review Rating:\n")
-    csv_file.write(rating + "\n\n")
+    writer.writerow(["Review Rating:"])
+    writer.writerow([rating])
 
-    csv_file.write("Image URL:\n")
-    csv_file.write(image_url)
+    writer.writerow(["Image URL:"])
+    writer.writerow([image_url])
 
 
