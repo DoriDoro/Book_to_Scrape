@@ -1,7 +1,9 @@
+# coding=utf-8
+# -*- coding: utf-8 -*-
+
 import csv
 import requests
 import re
-import time
 
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup as BfS
@@ -13,16 +15,15 @@ response = requests.get(url)
 if response.ok:
     links = []
     soup = BfS(response.content, "html.parser")
-    # find all <articles class="product_pod">:
+    # find all <article class="product_pod">:
     rows = soup.find_all("article")
     for row in rows:
         a = row.find("a")
         link = a["href"]
         # create link of each book:
         links.append("http://books.toscrape.com/catalogue/" + link)
-    time.sleep(2)
 
-# write the row data of the books for one category in csv-file:
+# # write the row data of the books for one category in csv-file:
 # with open("category_data.csv", "w", newline="", encoding="utf-8") as file:
 #     for link in links:
 #         file.write(link.replace("../../../", "") + "\n")
@@ -37,13 +38,13 @@ with open("category_data.csv", "r", newline="", encoding="utf-8") as file:
 
             # search for information on website:
             # title
-            title = soup.find("li", class_="active").string
+            title = soup.find("li", class_="active").text
             # universal product code (upc)
             upc = soup.find("th", text="UPC").find_next_sibling("td").string
             # price including tax (pit)
-            pit = soup.find("th", text="Price (incl. tax)").find_next_sibling("td").string
+            pit = soup.find("th", text="Price (incl. tax)").find_next_sibling("td").string.replace("Â", "")
             # price_excluding_tax (pet)
-            pet = soup.find("th", text="Price (excl. tax)").find_next_sibling("td").string
+            pet = soup.find("th", text="Price (excl. tax)").find_next_sibling("td").string.replace("Â", "")
             # available number
             available = soup.find("th", text="Availability").find_next_sibling("td").string
             # product description
@@ -51,7 +52,7 @@ with open("category_data.csv", "r", newline="", encoding="utf-8") as file:
             # category
             category = soup.find("a", attrs={"href": re.compile("/category/books/")}).string
             # review rating
-            rating = soup.find("th", text="Number of reviews").find_next_sibling("td").string
+            rating = soup.find("p", attrs={'class': 'star-rating'}).get("class")[1]
             # image
             image = soup.find("img")
             image_url = image["src"]
@@ -87,4 +88,4 @@ with open("category.csv", "w", newline="", encoding="utf-8") as file:
     writer.writerow([rating])
 
     writer.writerow(["Image URL:"])
-    writer.writerow([image_url])
+    writer.writerow([image_url.replace("../..", "http://books.toscrape.com")])

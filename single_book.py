@@ -1,3 +1,6 @@
+# coding=utf-8
+# -*- coding: utf-8 -*-
+
 import csv
 import requests
 import re
@@ -25,7 +28,7 @@ description = soup.find("div", id="product_description").find_next("p").string
 # category
 category = soup.find("a", attrs={"href": re.compile("/category/books/")}).string
 # review rating
-rating = soup.find("th", text="Number of reviews").find_next_sibling("td").string
+rating = soup.find("p", attrs={'class': 'star-rating'}).get("class")[1]
 # image
 image = soup.find("img")
 image_url = image["src"]
@@ -61,6 +64,6 @@ with open("single_book.csv", "w", newline="", encoding="utf-8") as file:
     writer.writerow([rating])
 
     writer.writerow(["Image URL:"])
-    writer.writerow([image_url])
+    writer.writerow([image_url.replace("../..", "http://books.toscrape.com")])
 
 

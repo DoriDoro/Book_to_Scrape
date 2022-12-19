@@ -1,6 +1,8 @@
+# coding=utf-8
+# -*- coding: utf-8 -*-
+
 import csv
 import requests
-import time
 
 from bs4 import BeautifulSoup as BfS
 
@@ -14,25 +16,28 @@ if response.ok:
     categories = soup.select(".side_categories a")
 
     # create a list with all links of <a> tag:
-    # links = []
-    # for link_category in categories:
-    #   # search for the href data:
-    #     a = link_category["href"]
-    #   # add link to list of links:
-    #     links.append("http://books.toscrape.com/" + a)
-    # # write information in csv-file:
-    # with open("books_data.csv", "w", newline="", encoding="utf-8") as file:
-    #     writer = csv.writer(file)
-    #     for link in links:
-    #         writer.writerow([link
-    #                         .replace("http://books.toscrape.com/catalogue/category/books_1/index.html", "") + "\n"])
+    all_links = []
+    for link_category in categories:
+        # search for the href data:
+        a = link_category["href"]
+        # add link to list of links:
+        all_links.append("http://books.toscrape.com/" + a)
+        links = all_links[1:]
+        # tells the links-list to start at the second link that is why we do not need to use replace
+        # print(links) # for every category all links received
+
+    # write information in csv-file:
+    with open("books_data.csv", "w", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file, delimiter=',', escapechar=' ', quoting=csv.QUOTE_NONE)
+        for link in links:
+            # print("link:", link)
+            writer.writerow([link])
 
     # read information from csv-file:
     with open("books_data.csv", "r", newline="", encoding="utf-8") as file:
         for row in file:
             url = row.strip()
             response = requests.get(url)
-            print(response)
             if response.ok:
                 soup = BfS(response.text, "html.parser")
 
@@ -52,14 +57,14 @@ if response.ok:
                 # # category
                 # category = soup.find("a", attrs={"href": re.compile("/category/books/")}).string
                 # # review rating
-                # rating = soup.find("th", text="Number of reviews").find_next_sibling("td").string
+                # rating = soup.find("p", attrs={'class': 'star-rating'}).get("class")[1]
                 # # image
                 # image = soup.find("img")
                 # image_url = image["src"]
 
 # create for every category a csv file
 # for book_cat in categories:
-#   with open("{book_cat}.csv" ...)
+  # with open("{book_cat}.csv" ...)
 with open("books.csv", "w", newline="", encoding="utf-8") as file:
     writer = csv.writer(file)
     writer.writerow(["All categories:"])
