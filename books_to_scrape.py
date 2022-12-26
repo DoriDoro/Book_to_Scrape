@@ -6,6 +6,13 @@ import requests
 
 from bs4 import BeautifulSoup as BfS
 
+# function url
+# function category
+# function info
+# function image plus write in csv
+# function to read from csv
+
+
 # the URL to scrape:
 url = "http://books.toscrape.com/index.html"
 response = requests.get(url)
@@ -45,14 +52,15 @@ if response.ok:
                 # title
                 title = soup.find("li", class_="active").string
                 # universal product code (upc)
+                # a faire!!!!!
                 # upc = soup.find("th", text="UPC").find_next_sibling("td").string
                 # # price including tax (pit)
                 # pit = soup.find("th", text="Price (incl. tax)").find_next_sibling("td").string
                 # # price_excluding_tax (pet)
                 # pet = soup.find("th", text="Price (excl. tax)").find_next_sibling("td").string
                 # # available number
-                # available = soup.find("th", text="Availability").find_next_sibling("td").string
-                # # product description
+                available = soup.find("th", text="Availability").find_next_sibling("td").string
+                # product description
                 # description = soup.find("div", id="product_description").find_next("p").string
                 # # category
                 # category = soup.find("a", attrs={"href": re.compile("/category/books/")}).string

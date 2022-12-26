@@ -9,8 +9,8 @@ from bs4 import BeautifulSoup as BfS
 
 # the URL to scrape:
 url = "http://books.toscrape.com/catalogue/the-murder-that-never-was-forensic-instincts-5_939/index.html"
-page = requests.get(url)
-soup = BfS(page.content, "html.parser")
+response = requests.get(url)
+soup = BfS(response.content, "html.parser")
 
 # search for information on website:
 # title
