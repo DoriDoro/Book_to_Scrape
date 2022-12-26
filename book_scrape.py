@@ -148,30 +148,31 @@ def category_scrape(choose_one_category):
 
 # create a function for all books:
 def all_books(links_all_books):
-    for links in links_all_books:
-        response = requests.get(links)
+    category_links = []
+    for link in links_all_books:
+        response = requests.get(link)
+        category_links.append(link)
         if response.ok:
             # links are all categories
-            print("-------------------", links)
             # write all links into a csv file:
-            with open("books_row_data.csv", "w", newline="", encoding="utf-8") as file:
-                for single_link in links:
-                    writer = csv.writer(file)
-                    writer.writerow([single_link])
+            # with open("books_row_data.csv", "w", newline="", encoding="utf-8") as file:
+            #     for single_link in category_links:
+            #         writer = csv.writer(file)
+            #         writer.writerow([single_link])
 
+            # read row data from file and get information:
+            with open("books_row_data.csv", "r", newline="", encoding="utf-8") as csv_file:
+                for row in csv_file:
+                    url = row.strip()
+                    response = requests.get(url)
+                    if response.ok:
+                        soup = BfS(response.content, "html.parser")
 
-            # # read row data from file and get information:
-            # with open("books_row_data.csv", "r", newline="", encoding="utf-8") as csv_file:
-            #     for row in csv_file:
-            #         url = row.strip()
-            #         response = requests.get(url)
-            #         if response.ok:
-            #             soup = BfS(response.content, "html.parser")
-            #             print("here-----------------", soup)
-            #
-            #             # search for information on website:
-            #             # title
-            #             title = soup.find("li", class_="active").text
+                        # # search for information on website:
+                        # # title
+                        # title = soup.find("li", class_="active").text
+                        # print(title)   # all category title like: Travel, Mystery ...
+                        
             #             # universal product code (upc)
             #             upc = soup.find("th", text="UPC").find_next_sibling("td").string
             #             # price including tax (pit)
