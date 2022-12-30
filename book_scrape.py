@@ -13,16 +13,16 @@ def get_url():
     url = "http://books.toscrape.com/"
     response = requests.get(url)
     if response.ok:
-        links_of_categories = []
+        links_of_categories_all = []
         soup = BfS(response.content, "html.parser")
         # take information for the sidebar: categories
         categories = soup.select(".side_categories a")
         for category in categories:
             link = category["href"]
             # create one link of each book:
-            links_of_categories.append("http://books.toscrape.com/" + link)
+            links_of_categories_all.append(f"http://books.toscrape.com/{link}")
             # start from the second link:
-            links_all_books = links_of_categories[1:]
+            links_of_categories = links_of_categories_all[1:]
 
         # choose a random category to scrape as URL:
         choose_one_category = random.choice(links_of_categories)
@@ -36,55 +36,69 @@ def get_url():
         for book in books:
             a = book.find("a")
             link = a["href"]  # link is string
-            links_of_books.append("http://books.toscrape.com/catalogue/" + link.replace("../../../", ""))
+            links_of_books.append(f'http://books.toscrape.com/catalogue/{link.replace("../../../", "")}')
 
         choose_one_book = random.choice(links_of_books)
 
-    # single_book(choose_one_book)
-    # category_scrape(choose_one_category)
-    all_books(links_all_books)
+    single_book(choose_one_book)
+    category_scrape(random.choice(links_of_categories))
+    all_books(links_of_categories)
 
 
-# create a function to scrape one book:
+# scrape one book:
 def single_book(choose_one_book):
+    data = [choose_one_book]
     response = requests.get(choose_one_book)
     if response.ok:
         soup = BfS(response.content, "html.parser")
         # search for information on website:
         # title
         title = soup.find("li", class_="active").string
+        data.append(title)
         # universal product code (upc)
         upc = soup.find("th", text="UPC").find_next_sibling("td").string
+        data.append(upc)
         # price including tax (pit)
         pit = soup.find("th", text="Price (incl. tax)").find_next_sibling("td").string
+        data.append(pit)
         # price_excluding_tax (pet)
         pet = soup.find("th", text="Price (excl. tax)").find_next_sibling("td").string
+        data.append(pet)
         # available number
         available = soup.find("th", text="Availability").find_next_sibling("td").string
+        data.append(available.replace("In stock (", "").replace(")", ""))
         # product description
         description = soup.find("div", id="product_description").find_next("p").string
+        data.append(description)
         # category
         category = soup.find("a", attrs={"href": re.compile("/category/books/")}).string
+        data.append(category)
         # review rating
         rating = soup.find("p", attrs={'class': 'star-rating'}).get("class")[1]
+        data.append(rating)
         # image
         image = soup.find("img")
         image_url = image["src"]
+        data.append(image_url.replace("../..", "http://books.toscrape.com"))
 
-        # write information in csv-file:
-        header = ["Product Page URL", "Universal Product Code", "Title", "Price including tax", "Price excluding tax",
-                  "Number available", "Product Description", "Category", "Review Rating", "Image URL"]
-        data = [choose_one_book, upc, title, pit, pet, available.replace("In stock (", "").replace(")", ""),
-                description, category, rating, image_url.replace("../..", "http://books.toscrape.com")]
-
-        with open(f"{category}.csv", "w", newline="", encoding="utf-8") as file:
-            writer = csv.writer(file)
-            writer.writerow(header)
-            writer.writerow(data)
+        write_csv(data)
 
 
-# create a function to scrape the categories:
+def write_csv(data):
+    # write information in csv-file:
+    header = ["Product Page URL", "Universal Product Code", "Title", "Price including tax", "Price excluding tax",
+              "Number available", "Product Description", "Category", "Review Rating", "Image URL"]
+    lines = [data]
+
+    with open(f"{data[7]}.csv", "w", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+        writer.writerow(header)
+        writer.writerow(lines)
+
+
+# scrape the categories:
 def category_scrape(choose_one_category):
+    print("------ choose ", choose_one_category)
     response = requests.get(choose_one_category)
     if response.ok:
         links = []
@@ -95,113 +109,39 @@ def category_scrape(choose_one_category):
             a = article.find("a")
             a_link = a["href"]
             # create link of each book:
-            links.append("http://books.toscrape.com/catalogue/" + a_link.replace("../../../", ""))
+            links.append(f'http://books.toscrape.com/catalogue/{a_link.replace("../../../", "")}')
 
-        # # write links as row data in csv file:
-        # with open("one_category_row_data.csv", "w", newline="", encoding="utf-8") as file:
-        #     for link in links:
-        #         writer = csv.writer(file)
-        #         writer.writerow([link])
+        write_csv_link(links)
 
         # read row data from file and get information:
-        with open("one_category_row_data.csv", "r", newline="", encoding="utf-8") as file:
+        with open("row_data.csv", "r", newline="", encoding="utf-8") as file:
             for row in file:
                 url = row.strip()
-                response = requests.get(url)
-                if response.ok:
-                    soup = BfS(response.content, "html.parser")
-
-                    # search for information on website:
-                    # title
-                    title = soup.find("li", class_="active").text
-                    # universal product code (upc)
-                    upc = soup.find("th", text="UPC").find_next_sibling("td").string
-                    # price including tax (pit)
-                    pit = soup.find("th", text="Price (incl. tax)").find_next_sibling("td").string.replace("Â", "")
-                    # price_excluding_tax (pet)
-                    pet = soup.find("th", text="Price (excl. tax)").find_next_sibling("td").string.replace("Â", "")
-                    # available number
-                    available = soup.find("th", text="Availability").find_next_sibling("td").string
-                    # product description
-                    description = soup.find("div", id="product_description").find_next("p").string
-                    # category
-                    category = soup.find("a", attrs={"href": re.compile("/category/books/")}).string
-                    # review rating
-                    rating = soup.find("p", attrs={'class': 'star-rating'}).get("class")[1]
-                    # image
-                    image = soup.find("img")
-                    image_url = image["src"]
-
-                    # write the information in csv file:
-                    header = ["Product Page URL", "Universal Product Code", "Title", "Price including tax",
-                              "Price excluding tax",
-                              "Number available", "Product Description", "Category", "Review Rating", "Image URL"]
-                    data = [choose_one_category, upc, title, pit, pet,
-                            available.replace("In stock (", "").replace(")", ""), description, category, rating,
-                            image_url.replace("../..", "http://books.toscrape.com")]
-
-                    with open(f"{category}.csv", "w", newline="", encoding="utf-8") as csv_file:
-                        writer = csv.writer(csv_file)
-                        writer.writerow(header)
-                        writer.writerow(data)
+                single_book(url)
+                print("- - - ", url)
+                # writes just the last one in csv file instead of all
 
 
-# create a function for all books:
-def all_books(links_all_books):
+# write links as row data in csv file:
+def write_csv_link(links):
+    with open("row_data.csv", "w", newline="", encoding="utf-8") as file:
+        for link in links:
+            writer = csv.writer(file)
+            writer.writerow([link])
+
+
+# scrape all books:
+def all_books(links_of_categories):
     category_links = []
-    for link in links_all_books:
+    for link in links_of_categories:
         response = requests.get(link)
         category_links.append(link)
-        if response.ok:
-            # links are all categories
-            # write all links into a csv file:
-            # with open("books_row_data.csv", "w", newline="", encoding="utf-8") as file:
-            #     for single_link in category_links:
-            #         writer = csv.writer(file)
-            #         writer.writerow([single_link])
-
-            # read row data from file and get information:
-            with open("books_row_data.csv", "r", newline="", encoding="utf-8") as csv_file:
-                for row in csv_file:
-                    url = row.strip()
-                    response = requests.get(url)
-                    if response.ok:
-                        soup = BfS(response.content, "html.parser")
-
-                        # # search for information on website:
-                        # # title
-                        # title = soup.find("li", class_="active").text
-                        # print(title)   # all category title like: Travel, Mystery ...
-                        
-            #             # universal product code (upc)
-            #             upc = soup.find("th", text="UPC").find_next_sibling("td").string
-            #             # price including tax (pit)
-            #             pit = soup.find("th", text="Price (incl. tax)").find_next_sibling("td").string.replace("Â", "")
-            #             # price_excluding_tax (pet)
-            #             pet = soup.find("th", text="Price (excl. tax)").find_next_sibling("td").string.replace("Â", "")
-            #             # available number
-            #             available = soup.find("th", text="Availability").find_next_sibling("td").string
-            #             # product description
-            #             description = soup.find("div", id="product_description").find_next("p").string
-            #             # category
-            #             category = soup.find("a", attrs={"href": re.compile("/category/books/")}).string
-            #             # review rating
-            #             rating = soup.find("p", attrs={'class': 'star-rating'}).get("class")[1]
-            #             # image
-            #             image = soup.find("img")
-            #             image_url = image["src"]
-            #
-            #             # write the information in csv file:
-            #             header = ["Product Page URL", "Universal Product Code", "Title", "Price including tax",
-            #                       "Price excluding tax",
-            #                       "Number available", "Product Description", "Category", "Review Rating", "Image URL"]
-            #             data = [links_all_books, upc, title, pit, pet,
-            #                     available.replace("In stock (", "").replace(")", ""), description, category, rating,
-            #                     image_url.replace("../..", "http://books.toscrape.com")]
-            #             with open(f"{category}.csv", "w", newline="", encoding="utf-8") as f:
-            #                 writer = csv.writer(f)
-            #                 writer.writerow(header)
-            #                 writer.writerow(data)
+    if response.ok:
+        write_csv_link(category_links)
+        print(category_links)
+        for one_category in category_links:
+            print("--------------------", one_category)
+            category_scrape(one_category)
 
 
 get_url()
