@@ -9,7 +9,12 @@ import requests
 from bs4 import BeautifulSoup as BfS
 
 
+# issues: some titles (sports-and-games or poetry) was not .csv
+# http://books.toscrape.com/catalogue/category/books/fiction_10/page-3.html for each category
+
+
 def get_url():
+    print("--------------------start--------------------")
     url = "http://books.toscrape.com/"
     response = requests.get(url)
     if response.ok:
@@ -24,31 +29,95 @@ def get_url():
             # start from the second link:
             links_of_categories = links_of_categories_all[1:]
 
-        # choose a random category to scrape as URL:
-        choose_one_category = random.choice(links_of_categories)
-        response_single_book = requests.get(choose_one_category)
-        soup_single_book = BfS(response_single_book.content, "html.parser")
+        get_category_links(links_of_categories)
 
-        links_of_books = []
-        # choose a random book on the page:
-        # find all <article class="product_pod">:
-        books = soup_single_book.find_all("article")
-        for book in books:
-            a = book.find("a")
-            link = a["href"]  # link is string
-            links_of_books.append(f'http://books.toscrape.com/catalogue/{link.replace("../../../", "")}')
+    category = ["Travel", "Mystery", "Historical Fiction", "Sequential Art", "Classics", "Philosophy", "Romance",
+                "Womens Fiction", "Fiction", "Childrens", "Religion", "Nonfiction", "Music", " Default",
+                "Science Fiction", "Sports and Games", "Add a comment", "Fantasy", "New Adult", "Young Adult",
+                "Science", "Poetry", "Paranormal", "Art", "Psychology", "Autobiography", "Parenting", "Adult Fiction",
+                "Humor", "Horror", "History", "Food and Drink", "Christian Fiction", "Business", "Biography",
+                "Thriller", "Contemporary", "Spirituality", "Academic", "Self Help", "Historical", "Christian",
+                "Suspense", "Short Stories", "Novels", "Health", "Politics", "Cultural", "Erotica", "Crime"]
 
-        choose_one_book = random.choice(links_of_books)
+    # scrap_the_whole_site()
+    category_scrape(random.choice(category))
+    # single_book(book)
 
-    single_book(choose_one_book)
-    category_scrape(random.choice(links_of_categories))
-    all_books(links_of_categories)
+
+def get_category_links(links_of_categories):
+    # create list for all category links:
+    category_links = []
+    for link in links_of_categories:
+        response = requests.get(link)
+        if response.ok:
+            category_links.append(link)
+            # write all category links in a csv file:
+            write_csv_link(category_links, name="category_links")
+
+
+# scrape all books:
+def scrap_the_whole_site():
+    print("----------start all----------")
+    # read information from csv-file to get the category links:
+    with open("results/category_links.csv", "r", newline="", encoding="utf-8") as file:
+        for link in file:
+            url = link.strip()
+            # # create a variable to get the category as name for the csv file:
+            # category = url.replace("http://books.toscrape.com/catalogue/category/books/", "").replace("/index.html", "")
+            # category = re.sub(r"\_[0-9]|[0-9]", "", category)
+            response = requests.get(url)
+            if response.ok:
+                book_in_category = []
+                soup = BfS(response.content, "html.parser")
+                # find all <article class="product_pod">:
+                articles = soup.find_all("article")
+                for article in articles:
+                    a = article.find("a")
+                    a_link = a["href"]
+                    # create link of each book:
+                    book_in_category.append(f'http://books.toscrape.com/catalogue/{a_link.replace("../../../", "")}')
+                # write all books from each category in csv file:
+                # append_csv_link(book_in_category, name=f"books_in_cat_{category}")
+
+
+# write links as row data in csv file:
+def write_csv_link(links, name):
+    with open(f"results/{name}.csv", "w", newline="", encoding="utf-8") as file:
+        for link in links:
+            writer = csv.writer(file)
+            writer.writerow([link])
+
+
+# append links as row data in csv file:
+def append_csv_link(links, name):
+    with open(f"results/{name}.csv", "a", newline="", encoding="utf-8") as file:
+        for link in links:
+            writer = csv.writer(file)
+            writer.writerow([link])
+
+
+# scrape the categories:
+# enter a category
+def category_scrape(category):
+    print("----------start category----------")
+    category_lower = category.lower()
+    final_category = category_lower.replace(" ", "-")
+
+    # read information from csv-file to get the link of one book of one category:
+    with open(f"results/books_in_cat_{final_category}.csv", "r", newline="", encoding="utf-8") as file:
+        # in file are links of books stored
+        for link in file:
+            url = link.strip()
+            response = requests.get(url)
+            if response.ok:
+                single_book(url)
 
 
 # scrape one book:
-def single_book(choose_one_book):
-    data = [choose_one_book]
-    response = requests.get(choose_one_book)
+def single_book(book):
+    print("----------start book----------")
+    data = [book]
+    response = requests.get(book)
     if response.ok:
         soup = BfS(response.content, "html.parser")
         # search for information on website:
@@ -69,7 +138,11 @@ def single_book(choose_one_book):
         data.append(available.replace("In stock (", "").replace(")", ""))
         # product description
         description = soup.find("div", id="product_description").find_next("p").string
-        data.append(description)
+        # if no description = None
+        if description:
+            data.append(description)
+        else:
+            data.append(None)
         # category
         category = soup.find("a", attrs={"href": re.compile("/category/books/")}).string
         data.append(category)
@@ -90,58 +163,10 @@ def write_csv(data):
               "Number available", "Product Description", "Category", "Review Rating", "Image URL"]
     lines = [data]
 
-    with open(f"{data[7]}.csv", "w", newline="", encoding="utf-8") as file:
+    with open(f"results/{data[1]}.csv", "w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow(header)
         writer.writerow(lines)
-
-
-# scrape the categories:
-def category_scrape(choose_one_category):
-    print("------ choose ", choose_one_category)
-    response = requests.get(choose_one_category)
-    if response.ok:
-        links = []
-        soup = BfS(response.content, "html.parser")
-        # find all <article class="product_pod">:
-        articles = soup.find_all("article")
-        for article in articles:
-            a = article.find("a")
-            a_link = a["href"]
-            # create link of each book:
-            links.append(f'http://books.toscrape.com/catalogue/{a_link.replace("../../../", "")}')
-
-        write_csv_link(links)
-
-        # read row data from file and get information:
-        with open("row_data.csv", "r", newline="", encoding="utf-8") as file:
-            for row in file:
-                url = row.strip()
-                single_book(url)
-                print("- - - ", url)
-                # writes just the last one in csv file instead of all
-
-
-# write links as row data in csv file:
-def write_csv_link(links):
-    with open("row_data.csv", "w", newline="", encoding="utf-8") as file:
-        for link in links:
-            writer = csv.writer(file)
-            writer.writerow([link])
-
-
-# scrape all books:
-def all_books(links_of_categories):
-    category_links = []
-    for link in links_of_categories:
-        response = requests.get(link)
-        category_links.append(link)
-    if response.ok:
-        write_csv_link(category_links)
-        print(category_links)
-        for one_category in category_links:
-            print("--------------------", one_category)
-            category_scrape(one_category)
 
 
 get_url()
