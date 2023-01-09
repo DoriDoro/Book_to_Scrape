@@ -7,30 +7,21 @@ import requests
 
 from bs4 import BeautifulSoup as BfS
 
-url = "http://books.toscrape.com/"
-
 
 # scrape all links of the categories even for multiple pages:
-def category_scrape(url):
+def category_scrape():
     print("----------start category----------")
+    url = "http://books.toscrape.com/"
     response = requests.get(url)
     if response.ok:
+        # create a list for all links of the categories:
         links_of_categories_all = []
-        # create list for the names of the categories:
-        name_of_categories_all = []
 
         soup = BfS(response.content, "html.parser")
         # take information for the sidebar: categories
         categories = soup.select(".side_categories a")
         for category in categories:
             href = category["href"]
-
-            # get the category name:
-            category_name_list = href.replace("catalogue/category/books/", "")
-            category_name_list = re.sub(r"\_[0-9]|[0-9]|[0-9]", "", category_name_list)
-            category_name = category_name_list.replace("/index.html", "")
-            name_of_categories_all.append(category_name)
-
             link = f"http://books.toscrape.com/{href}"
             # create one link of each book:
             links_of_categories_all.append(link)
@@ -53,32 +44,28 @@ def category_scrape(url):
                                 counter += 1
         # start from the second:
         links_of_categories = links_of_categories_all[1:]
-        name_of_categories = name_of_categories_all[1:]
 
         # scrape all links of the books
-        scrape_links_of_books_in_category(links_of_categories, name_of_categories)
-
-        # scrape the single book:
-        # single_book(book)
+        scrape_links_of_books_in_category(links_of_categories)
 
 
 # get all links of the books in one category:
-def scrape_links_of_books_in_category(category_links, name_of_categories):
+def scrape_links_of_books_in_category(category_links):
     print("----------start books in category----------")
+
     # read information to get the book links of each book in one category:
     for link in category_links:
         book_url = link.strip()
-
-        # check the link and get the category name
-
-        # print("url", book_url)  # the link of each category with several pages
-        # print("name", name_of_categories)  # list of the names of the category
-
         response = requests.get(book_url)
         if response.ok:
             # create a list for all links of books inside a category:
             books_in_category = []
             soup = BfS(response.content, "html.parser")
+            # find the category name:
+            div_title = soup.find("div", class_="page-header")
+            get_name_of_category = div_title.find("h1").text
+            name_of_category = get_name_of_category.lower()
+
             # find all <article class="product_pod">:
             articles = soup.find_all("article", class_="product_pod")
             for article in articles:
@@ -87,20 +74,12 @@ def scrape_links_of_books_in_category(category_links, name_of_categories):
                 # create link of each book:
                 books_in_category.append(f'http://books.toscrape.com/catalogue/{a_link.replace("../../../", "")}')
 
-            # print("url", book_url)
-            # print("book links", books_in_category)
-            # print("name category", name_of_categories)
+                for book in books_in_category:
+                    # scrape the single book:
+                    single_book(book)
 
             # write all books from each category in csv file:
-            write_csv_link(books_in_category, name=f"books_in_cat_")
-
-
-# write links as row data in csv file:
-def write_csv_link(links, name):
-    with open(f"results/{name}.csv", "w", newline="", encoding="utf-8") as file:
-        for link in links:
-            writer = csv.writer(file)
-            writer.writerow([link])
+            append_csv_link(books_in_category, name=f"books_in_cat_{name_of_category}")
 
 
 # append links as row data in csv file:
@@ -114,6 +93,7 @@ def append_csv_link(links, name):
 # scrape one book:
 def single_book(book):
     print("----------start book----------")
+    # ISSUE: : & signs in title
     data = [book]
     response = requests.get(book)
     if response.ok:
@@ -124,8 +104,8 @@ def single_book(book):
         image_url = image["src"]
         data.append(image_url.replace("../..", "http://books.toscrape.com"))
         # title: at image tag use alt attribute
-        # title = soup.find("li", class_="active").string
         title = image["alt"]
+
         data.append(title)
         # universal product code (upc)
         upc = soup.find("th", text="UPC").find_next_sibling("td").string
@@ -168,4 +148,4 @@ def write_csv(data):
         writer.writerow(lines)
 
 
-category_scrape(url)
+category_scrape()
