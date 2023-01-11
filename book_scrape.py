@@ -93,7 +93,6 @@ def append_csv_link(links, name):
 # scrape one book:
 def single_book(book):
     print("----------start book----------")
-    # ISSUE: : & signs in title
     data = [book]
     response = requests.get(book)
     if response.ok:
@@ -104,8 +103,8 @@ def single_book(book):
         image_url = image["src"]
         data.append(image_url.replace("../..", "http://books.toscrape.com"))
         # title: at image tag use alt attribute
-        title = image["alt"]
-
+        title_side = image["alt"]
+        title = title_side.replace(":", "")
         data.append(title)
         # universal product code (upc)
         upc = soup.find("th", text="UPC").find_next_sibling("td").string
