@@ -22,5 +22,5 @@ These information should be extracted for a single book, a category and for all 
 1. git clone https://github.com/DoriDoro/Book_to_Scrape.git
 2. $ cd Book_to_Scrape
 3. $ python -m venv venv
-4. $ . venv/bin/activate
+4. $ . venv/bin/activate (on MacOS)  venv\Scripts\activate (on Windows)
 5. $ pip install -r requirements.txt
