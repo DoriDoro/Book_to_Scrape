@@ -28,14 +28,17 @@ def category_scrape():
             # create one link of each book:
             links_of_categories_all.append(link)
 
+            # start from the second link, start with Travel:
             if not href == "catalogue/category/books_1/index.html":
                 response = requests.get(link)
                 if response.ok:
                     soup = BfS(response.content, "html.parser")
+                    # check if for a next page, take the info: page 1 of 2:
                     next_page = soup.findAll('ul', class_='pager')
                     if next_page:
                         for page in next_page:
                             all_num_page = page.find("li", class_="current").text
+                            # get the last number of info, to know how many pages will be there:
                             num_page = int(all_num_page.strip()[10:])
 
                             counter = 2
@@ -44,9 +47,10 @@ def category_scrape():
                                 links_of_categories_all.append(link_next_page)
                                 num_page -= 1
                                 counter += 1
-        # start from the second:
+
+        # start from the second link in the list:
         links_of_categories = links_of_categories_all[1:]
-        # print(links_of_categories)  # every link with multiple pages of the category
+
         return links_of_categories
 
 
@@ -103,7 +107,7 @@ def single_book_scrape(book):
             description = None
         # category
         get_category = soup.find("a", attrs={"href": re.compile("/category/books/")}).string
-        category = get_category.lower().replace(" ", "-")
+        # category = get_category.lower().replace(" ", "-")
         # review rating
         rating = soup.find("p", attrs={'class': 'star-rating'}).get("class")[1]
 
