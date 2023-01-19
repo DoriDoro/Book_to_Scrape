@@ -18,7 +18,6 @@ def category_scrape():
     if response.ok:
         # create a list for all links of the categories:
         links_of_categories_all = []
-
         soup = BfS(response.content, "html.parser")
         # take information for the sidebar: categories
         categories = soup.select(".side_categories a")
@@ -50,30 +49,30 @@ def category_scrape():
 
         # start from the second link in the list:
         links_of_categories = links_of_categories_all[1:]
-
+        # all links including multiple pages
         return links_of_categories
 
 
 # get all links of the books in one category:
 def scrape_links_of_books_in_category(category_links):
     print("----------start books in category----------")
-    # read information to get the book links of each book in one category:
+    # read information to get the book link of each book in one category:
+    # create a list for all links of books inside a category:
+    books_in_category = []
     for link in category_links:
         book_url = link.strip()
         response = requests.get(book_url)
         if response.ok:
-            # create a list for all links of books inside a category:
-            books_in_category = []
             soup = BfS(response.content, "html.parser")
             # find all <article class="product_pod">:
             articles = soup.find_all("article", class_="product_pod")
-            for article in articles:  # for books in category:
+            for article in articles:
                 a = article.find("a")
                 a_link = a["href"]
                 # create link of each book:
                 books_in_category.append(f'http://books.toscrape.com/catalogue/{a_link.replace("../../../", "")}')
 
-            return books_in_category
+    return books_in_category
 
 
 # scrape one book:
@@ -99,26 +98,30 @@ def single_book_scrape(book):
         get_available = soup.find("th", text="Availability").find_next_sibling("td").string
         available = get_available.replace("In stock (", "").replace(")", "")
         # product description
-        description = soup.find("div", id="product_description").find_next("p").string
+        description = None
+        try:
+            description = soup.find("div", id="product_description").find_next("p").string
+        except:
+            print("There is no description for this book.")
         # if no description = None
-        if description:
+        if description != None:
             description = description
         else:
             description = None
         # category
         get_category = soup.find("a", attrs={"href": re.compile("/category/books/")}).string
-        # category = get_category.lower().replace(" ", "-")
         # review rating
         rating = soup.find("p", attrs={'class': 'star-rating'}).get("class")[1]
 
         # save data of one single book in dictionary data:
-        data = {"link": book, "universal_product_code": upc, "Title": title, "price_including_tax": pit,
+        data = {"link": book, "universal_product_code": upc, "title": title, "price_including_tax": pit,
                 "price_excluding_tax": pet, "number_available": available, "product_description": description,
                 "category": get_category, "review_rating": rating, "image_url": image_url}
 
         return data
 
 
+# download the image of a single book from the website:
 def get_image(image_url, name_category):
     path = f"images/{name_category}"
     Path(path).mkdir(parents=True, exist_ok=True)
@@ -126,27 +129,29 @@ def get_image(image_url, name_category):
     wget.download(image_url, path, bar=None)
 
 
-def info_from_category(liens):
-    infos = []
-    for link in liens:
-        livre_info = single_book_scrape(link)
-        infos.append(livre_info)
-        get_image(livre_info['image_url'], livre_info['category'])
-    return infos
+def info_from_category(links):
+    information = []
+    for link in links:
+        book_info = single_book_scrape(link)
+        information.append(book_info)
+        get_image(book_info['image_url'], book_info['category'])
+
+        write_csv(information, book_info['category'])
+    return information
 
 
 # write information in csv-file:
-def write_csv(datas, category_name):  # data is a list
+def write_csv(data, category_name):
     header = ["Product Page URL", "Image URL", "Title", "Universal Product Code", "Price including tax",
               "Price excluding tax", "Number available", "Category", "Review Rating", "Product Description"]
 
     with open(f"results/{category_name}.csv", "w", newline="", encoding="utf-8") as file:
         write = csv.DictWriter(file, fieldnames=header)
         write.writeheader()
-        for one_book in datas:
+        for one_book in data:
             write.writerow({'Product Page URL': one_book['link'],
                             'Universal Product Code': one_book['universal_product_code'],
-                            'Title': one_book['Title'],
+                            'Title': one_book['title'],
                             'Price including tax': one_book['price_including_tax'],
                             'Price excluding tax': one_book['price_excluding_tax'],
                             'Number available': one_book['number_available'],
@@ -156,6 +161,7 @@ def write_csv(datas, category_name):  # data is a list
                             'Image URL': one_book['image_url']})
 
 
-liens = scrape_links_of_books_in_category(category_scrape())
-info = info_from_category(liens)
-write_csv(info, "travel")
+# start the program:
+# get first all categories with category_scrape:
+all_categories = category_scrape()
+links = scrape_links_of_books_in_category(all_categories)
