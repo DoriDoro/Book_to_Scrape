@@ -71,6 +71,7 @@ def scrape_links_of_books_in_category(category_links):
                 a_link = a["href"]
                 # create link of each book:
                 books_in_category.append(f'http://books.toscrape.com/catalogue/{a_link.replace("../../../", "")}')
+                print(books_in_category)
 
     return books_in_category
 
@@ -132,6 +133,7 @@ def get_image(image_url, name_category):
 def info_from_category(links):
     information = []
     for link in links:
+        print("link---------------------", link)
         book_info = single_book_scrape(link)
         information.append(book_info)
         get_image(book_info['image_url'], book_info['category'])
@@ -159,9 +161,3 @@ def write_csv(data, category_name):
                             'Category': one_book['category'],
                             'Review Rating': one_book['review_rating'],
                             'Image URL': one_book['image_url']})
-
-
-# start the program:
-# get first all categories with category_scrape:
-all_categories = category_scrape()
-links = scrape_links_of_books_in_category(all_categories)
