@@ -104,7 +104,7 @@ def single_book_scrape(book):
         except:
             print("There is no description for this book.")
         # if no description = None
-        if description != None:
+        if description is not None:
             description = description
         else:
             description = None
