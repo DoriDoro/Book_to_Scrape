@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup as BfS
 # scrape all links of the categories even for multiple pages:
 def category_scrape():
     print("----------start category----------")
+    print(" Please wait ... ")
     url = "http://books.toscrape.com/"
     response = requests.get(url)
     if response.ok:
@@ -56,6 +57,7 @@ def category_scrape():
 # get all links of the books in one category:
 def scrape_links_of_books_in_category(category_links):
     print("----------start books in category----------")
+    print(" Please wait ... ")
     # read information to get the book link of each book in one category:
     # create a list for all links of books inside a category:
     books_in_category = []
@@ -70,15 +72,18 @@ def scrape_links_of_books_in_category(category_links):
                 a = article.find("a")
                 a_link = a["href"]
                 # create link of each book:
-                books_in_category.append(f'http://books.toscrape.com/catalogue/{a_link.replace("../../../", "")}')
-                print(books_in_category)
+                books_in_category.append(
+                    f'http://books.toscrape.com/catalogue/{a_link.replace("../../../", "")}'
+                )
 
     return books_in_category
 
 
 # scrape one book:
 def single_book_scrape(book):
-    print("----------start book----------")
+    print("----------start single book----------")
+    print(" Please wait ... ")
+
     response = requests.get(book)
     if response.ok:
         soup = BfS(response.content, "html.parser")
@@ -115,9 +120,18 @@ def single_book_scrape(book):
         rating = soup.find("p", attrs={'class': 'star-rating'}).get("class")[1]
 
         # save data of one single book in dictionary data:
-        data = {"link": book, "universal_product_code": upc, "title": title, "price_including_tax": pit,
-                "price_excluding_tax": pet, "number_available": available, "product_description": description,
-                "category": get_category, "review_rating": rating, "image_url": image_url}
+        data = {
+            "link": book,
+            "universal_product_code": upc,
+            "title": title,
+            "price_including_tax": pit,
+            "price_excluding_tax": pet,
+            "number_available": available,
+            "product_description": description,
+            "category": get_category,
+            "review_rating": rating,
+            "image_url": image_url
+        }
 
         return data
 
@@ -133,7 +147,6 @@ def get_image(image_url, name_category):
 def info_from_category(links):
     information = []
     for link in links:
-        print("link---------------------", link)
         book_info = single_book_scrape(link)
         information.append(book_info)
         get_image(book_info['image_url'], book_info['category'])
@@ -144,8 +157,21 @@ def info_from_category(links):
 
 # write information in csv-file:
 def write_csv(data, category_name):
-    header = ["Product Page URL", "Image URL", "Title", "Universal Product Code", "Price including tax",
-              "Price excluding tax", "Number available", "Category", "Review Rating", "Product Description"]
+    header = [
+        "Product Page URL",
+        "Image URL",
+        "Title",
+        "Universal Product Code",
+        "Price including tax",
+        "Price excluding tax",
+        "Number available",
+        "Category",
+        "Review Rating",
+        "Product Description"
+    ]
+
+    path = f"results/"
+    Path(path).mkdir(parents=True, exist_ok=True)
 
     with open(f"results/{category_name}.csv", "w", newline="", encoding="utf-8") as file:
         write = csv.DictWriter(file, fieldnames=header)
