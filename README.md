@@ -30,7 +30,7 @@ open terminal
 ## Visualisation of the project:
 start the program with `python3 main.py`
 
-in terminal you will see:
+in terminal you will see: <br>
 ![terminal](/images_Readme/Terminal.png)
 
 the results are visible in following folders:
