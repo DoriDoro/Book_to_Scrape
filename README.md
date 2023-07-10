@@ -31,10 +31,10 @@ open terminal
 start the program with `python3 main.py`
 
 in terminal you will see:
-![terminal](images_Readme/Terminal.png)
+![terminal](/images_Readme/Terminal.png)
 
 the results are visible in following folders:
 1. the results of the images:
-![images](images_Readme/ResultsImages.png)
+![images](/images_Readme/ResultsImages.png)
 2. the csv files:
-![csv](images_Readme/ResultsResults.png)
+![csv](/images_Readme/ResultsResults.png)
