@@ -34,7 +34,7 @@ in terminal you will see: <br>
 ![terminal](/images_Readme/Terminal.png)
 
 the results are visible in following folders:
-1. the results of the images:
+1. the results of the images: <br>
 ![images](/images_Readme/ResultsImages.png)
-2. the csv files:
+2. the csv files: <br>
 ![csv](/images_Readme/ResultsResults.png)
