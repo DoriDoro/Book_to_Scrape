@@ -1,7 +1,7 @@
 # Book to Scrape
 
 ## Description:
-Project 2 of Openclassrooms Path: Developer Python - Book to Scrape 
+Project 2 of OpenClassrooms Path: Developer Python - Book to Scrape 
 -- extract certain information of http://books.toscrape.com into a csv file:
 
 - product_page_url
@@ -17,6 +17,7 @@ Project 2 of Openclassrooms Path: Developer Python - Book to Scrape
 
 These information should be extracted for each single book. Organised in the category on the website.
 
+**An improved version (2.0) is available in branch `dev/version-2.0`**
 
 ## Installation:
 open terminal
@@ -25,6 +26,13 @@ open terminal
 3. `python -m venv venv`
 4. `. venv/bin/activate` (on MacOS/Linux)  `venv\Scripts\activate` (on Windows)
 5. `pip install -r requirements.txt`
+
+
+## Skills:
+- Configuring a Python environment
+- Managing data using the ETL process
+- Using version control with Git and GitHub
+- Applying the basics of Python programming
 
 
 ## Visualisation of the project:
